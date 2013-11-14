@@ -218,6 +218,12 @@
         class="edu.hawaii.ics.csdl.jupiter.ui.preference.ViewPreferencePage"
         id="edu.hawaii.ics.csdl.jupiter.ui.preference.ViewPreferencePage">
     </page>
+    <page
+          category="edu.hawaii.ics.csdl.jupiter.ui.preference.GeneralPreferencePage"
+          class="edu.hawaii.ics.csdl.jupiter.ui.preference.ReviewTemplatePreferencePage"
+          id="edu.hawaii.ics.csdl.jupiter.ui.preference.ReviewTemplatePreferencePage"
+          name="%pageNameReviewTemplate">
+    </page>
   </extension>
   <!-- Resgisters actions to the workbench window bar. -->
   <extension point="org.eclipse.ui.actionSets">
