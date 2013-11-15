@@ -6,18 +6,11 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
-import java.util.List;
 
-import javanet.staxutils.StaxUtilsXMLOutputFactory;
-
+import javax.xml.bind.JAXB;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLOutputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
-import javax.xml.stream.XMLStreamWriter;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -48,6 +41,7 @@ public class PropertyXmlSerializer {
   /* package for the POJO classes of Property */
   public static final String PROPERTY_PACKAGE_NAMESPACE = "edu.hawaii.ics.csdl.jupiter.file.property";
 
+
   /**
    * Prohibits instantiation.
    */
@@ -61,15 +55,14 @@ public class PropertyXmlSerializer {
    * @throws ReviewException if an error occurs during the new document creation.
    */
   public static Property newProperty(final IProject project) throws ReviewException {
-    return readProperty(project);
-  }
-
-  // Parse the xml file to property object using jaxb
-  private static Property readProperty(final IProject project) throws ReviewException {
-
     IFile jupiterConfigIFile = project.getFile(PROPERTY_XML_FILE);
     File jupiterConfigFile = jupiterConfigIFile.getLocation().toFile();
 
+    return readProperty(jupiterConfigFile);
+  }
+
+  // Parse the xml file to property object using jaxb
+  private static Property readProperty(final File jupiterConfigFile) throws ReviewException {
     JAXBContext jaxbContext;
     try {
       jaxbContext = JAXBContext.newInstance(PROPERTY_PACKAGE_NAMESPACE);
@@ -107,76 +100,23 @@ public class PropertyXmlSerializer {
     catch (CoreException e) {
       log.error(e);
     }
-
     File outputPropertyFile = outputPropertyIFile.getLocation().toFile();
+    saveProperty(property, outputPropertyFile);
+  }
 
-    StaxUtilsXMLOutputFactory xmlof = new StaxUtilsXMLOutputFactory(XMLOutputFactory.newInstance());
-    xmlof.setProperty(StaxUtilsXMLOutputFactory.INDENTING, true);
-    XMLStreamWriter writer = null;
+  // Serialize property to xml using jaxb
+  private static void saveProperty(final Property property, final File outputPropertyFile) throws ReviewException {
+    // create an element for marshalling
+    // Property zooInfoElement = (new edu.hawaii.ics.csdl.jupiter.file.property.ObjectFactory()).createProperty();
+
+    // create a Marshaller and marshal to System.out
     try {
-      writer = xmlof.createXMLStreamWriter(new FileOutputStream(outputPropertyFile), "UTF-8");
-      writer.writeStartDocument("UTF-8", "1.0");
-
-      writer.writeStartElement(PropertyConstraints.ELEMENT_PROPERTY);
-
-      List<Review> reviews = property.getReview();
-      for (Review review : reviews) {
-        StaxPropertyXmlUtil.writeReview(writer, review);
-      }
-
-      writer.writeEndElement(); // Property
+      JAXB.marshal(property, new FileOutputStream(outputPropertyFile));
     }
     catch (FileNotFoundException e) {
       throw new ReviewException("FileNotFoundException: " + e.getMessage(), e);
     }
-    catch (XMLStreamException e) {
-      throw new ReviewException("XMLStreamException: " + e.getMessage(), e);
-    }
-    finally {
-      if (writer != null) {
-        try {
-          writer.close();
-        }
-        catch (XMLStreamException e) {
-          log.error(e);
-        }
 
-        try {
-          // try to refresh the resource since we wrote to it
-          outputPropertyIFile.refreshLocal(IResource.DEPTH_ONE, null);
-        }
-        catch (CoreException e) {
-          log.error(e);
-        }
-      }
-    }
-  }
-
-  /**
-   * Copies default config file in the <code>Project</code>. Leave the current config file in the project if the file
-   * already exists.
-   * 
-   * @param outputPropertyFile the output property file.
-   * @return the config file <code>File</code> instance.
-   * @throws IOException if problems occur.
-   * @throws CoreException if problems occur.
-   */
-  private static File copyDefaultConfigFileTo(final File outputPropertyFile) throws IOException, CoreException {
-    // System.out.println("about to copy a file to " + outputPropertyFile);
-    if (!outputPropertyFile.exists()) {
-      outputPropertyFile.createNewFile();
-    }
-
-    URL pluginUrl = ReviewPlugin.getInstance().getInstallURL();
-    // System.out.println(pluginUrl.getFile());
-    URL xmlUrl = FileLocator.toFileURL(new URL(pluginUrl, DEFAULT_PROPERTY_XML_FILE));
-    // System.out.println("From : " + xmlUrl);
-
-    File sourceXmlFile = new File(xmlUrl.getFile());
-    // copy XML file in the plug-in directory to the state location.
-    // System.out.println("From : " + sourceXmlFile);
-    FileUtil.copy(sourceXmlFile, outputPropertyFile);
-    return outputPropertyFile;
   }
 
   /**
@@ -187,36 +127,19 @@ public class PropertyXmlSerializer {
   public static Review cloneDefaultReview() {
     URL pluginUrl = ReviewPlugin.getInstance().getInstallURL();
 
-    XMLInputFactory xmlif = XMLInputFactory.newInstance();
-    xmlif.setProperty(XMLInputFactory.IS_REPLACING_ENTITY_REFERENCES, Boolean.TRUE);
-    xmlif.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
-    xmlif.setProperty(XMLInputFactory.IS_COALESCING, Boolean.FALSE);
-
-    XMLStreamReader reader = null;
     try {
       URL xmlUrl = FileLocator.toFileURL(new URL(pluginUrl, DEFAULT_PROPERTY_XML_FILE));
-
-      reader = xmlif.createXMLStreamReader(xmlUrl.getFile(), new FileInputStream(xmlUrl.getFile()));
-
-      Property property = StaxPropertyXmlUtil.parsePropertyFile(reader);
-      // there should only be the default review in the list
-      return property.getReview().get(0);
+      try {
+        Property property = readProperty(new File(xmlUrl.getFile()));
+        // there should only be the default review in the list
+        return property.getReview().get(0);
+      }
+      catch (ReviewException e) {
+        log.error(e);
+      }
     }
     catch (IOException e) {
       log.error(e);
-    }
-    catch (XMLStreamException e) {
-      log.error(e);
-    }
-    finally {
-      if (reader != null) {
-        try {
-          reader.close();
-        }
-        catch (XMLStreamException e) {
-          log.error(e);
-        }
-      }
     }
     return null;
   }
