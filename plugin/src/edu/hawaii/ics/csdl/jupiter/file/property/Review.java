@@ -58,13 +58,13 @@ import javax.xml.bind.annotation.XmlType;
 public class Review {
 
     @XmlElement(name = "Description", required = true)
-    protected String description;
+    protected String description = "";
     @XmlElement(name = "Author", required = true)
-    protected String author;
+    protected String author = "";
     @XmlElement(name = "CreationDate", required = true)
     protected CreationDate creationDate;
     @XmlElement(name = "Directory", required = true)
-    protected String directory;
+    protected String directory = "";
     @XmlElement(name = "Reviewers", required = true)
     protected Reviewers reviewers;
     @XmlElement(name = "Files", required = true)
@@ -74,7 +74,7 @@ public class Review {
     @XmlElement(name = "Filters", required = true)
     protected Filters filters;
     @XmlAttribute(name = "id")
-    protected String id;
+    protected String id = "";
 
     /**
      * Gets the value of the description property.
