@@ -1,7 +1,6 @@
 package edu.hawaii.ics.csdl.jupiter.ui.property;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.core.resources.IFile;
@@ -13,6 +12,7 @@ import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.TableLayout;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.ViewerSorter;
+import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
@@ -44,8 +44,9 @@ import edu.hawaii.ics.csdl.jupiter.util.ReviewDialog;
  * @version $Id: ReviewPropertyPage.java 84 2008-03-07 10:11:27Z jsakuda $
  */
 public class ReviewPropertyPage extends PropertyPage implements IWorkbenchPropertyPage {
+
   /** Jupiter logger */
-  private JupiterLogger log = JupiterLogger.getLogger();
+  private final JupiterLogger log = JupiterLogger.getLogger();
 
   private static final String TABLE_COLUMN = "TableColumn";
   private static final String COLUMN_KEY = "ColumnKey";
@@ -69,7 +70,8 @@ public class ReviewPropertyPage extends PropertyPage implements IWorkbenchProper
    * @param ancestor the composite.
    * @return the control.
    */
-  protected Control createContents(Composite ancestor) {
+  @Override
+  protected Control createContents(final Composite ancestor) {
     this.composite = ancestor;
     this.project = (IProject) getElement();
     noDefaultAndApplyButton();
@@ -85,7 +87,7 @@ public class ReviewPropertyPage extends PropertyPage implements IWorkbenchProper
    * @param parent the parent composite.
    * @return the child composite.
    */
-  private Composite createsGeneralComposite(Composite parent) {
+  private Composite createsGeneralComposite(final Composite parent) {
     Composite child = new Composite(parent, SWT.LEFT);
     FormLayout layout = new FormLayout();
     layout.marginWidth = 7;
@@ -99,29 +101,30 @@ public class ReviewPropertyPage extends PropertyPage implements IWorkbenchProper
    * 
    * @param parent the composite.
    */
-  private void createReviewIdTableContent(Composite parent) {
+  private void createReviewIdTableContent(final Composite parent) {
     this.table = new Table(parent, SWT.BORDER | SWT.FULL_SELECTION);
     FormData tableData = new FormData();
     tableData.left = new FormAttachment(0, 0);
     tableData.right = new FormAttachment(80, 0);
     tableData.top = new FormAttachment(0, 0);
     tableData.bottom = new FormAttachment(100, 0);
-    table.setLayoutData(tableData);
-    table.setHeaderVisible(true);
-    table.setLinesVisible(true);
-    table.addListener(SWT.Selection, new Listener() {
-      public void handleEvent(Event e) {
+    this.table.setLayoutData(tableData);
+    this.table.setHeaderVisible(true);
+    this.table.setLinesVisible(true);
+    this.table.addListener(SWT.Selection, new Listener() {
+
+      public void handleEvent(final Event e) {
         handleReviewIdSelection();
       }
     });
-    TableColumn columnReviewId = new TableColumn(table, SWT.NONE);
+    TableColumn columnReviewId = new TableColumn(this.table, SWT.NONE);
     columnReviewId.setText(ReviewI18n.getString(COLUMN_REVIEW_ID_KEY));
     columnReviewId.setData(COLUMN_KEY, COLUMN_REVIEW_ID_KEY);
-    TableColumn columnDescription = new TableColumn(table, SWT.NONE);
+    TableColumn columnDescription = new TableColumn(this.table, SWT.NONE);
     String description = ReviewI18n.getString(COLUMN_DESCRIPTION_KEY);
     columnDescription.setText(description);
     columnDescription.setData(COLUMN_KEY, COLUMN_DESCRIPTION_KEY);
-    TableColumn columnDate = new TableColumn(table, SWT.NONE);
+    TableColumn columnDate = new TableColumn(this.table, SWT.NONE);
     columnDate.setText(ReviewI18n.getString(COLUMN_DATE_KEY));
     columnDate.setData(COLUMN_KEY, COLUMN_DATE_KEY);
 
@@ -135,43 +138,44 @@ public class ReviewPropertyPage extends PropertyPage implements IWorkbenchProper
     tableLayout.addColumnData(new ColumnWeightData(22));
     tableLayout.addColumnData(new ColumnWeightData(48));
     tableLayout.addColumnData(new ColumnWeightData(20));
-    table.setLayout(tableLayout);
+    this.table.setLayout(tableLayout);
 
-    this.tableViewer = new TableViewer(table);
-    tableViewer.setLabelProvider(new ReviewPropertyLabelProvider());
-    tableViewer.setContentProvider(new ReviewPropertyContentProvider());
-    tableViewer.setSorter(ReviewPropertyViewerSorter.getViewerSorter(COLUMN_DATE_KEY));
-    tableViewer.setInput(PropertyResource.getInstance(this.project, true).getReviewIdList());
+    this.tableViewer = new TableViewer(this.table);
+    this.tableViewer.setLabelProvider(new ReviewPropertyLabelProvider());
+    this.tableViewer.setContentProvider(new ReviewPropertyContentProvider());
+    this.tableViewer.setSorter(ReviewPropertyViewerSorter.getViewerSorter(COLUMN_DATE_KEY));
+    this.tableViewer.setInput(PropertyResource.getInstance(this.project, true).getReviewIdList());
 
     // routine for the version 1 compatibility.
-//    if (tableViewer.getTable().getItemCount() <= 0) {
-//      // version 1.
-//      List<ReviewId> reviewIdList = Ver1PropertyHelper.getReviewIdList(this.project.getName(),
-//          false);
-//      IFile jupiterConfigFile = project.getFile(PropertyXmlSerializer.PROPERTY_XML_FILE);
-//      FileResource.remove(new IFile[] { jupiterConfigFile });
-//      // create version 2 .jupiter file.
-//      String defaultName = PropertyConstraints.DEFAULT_REVIEW_ID;
-//      PropertyResource propertyResource = null;
-//      for (Iterator<ReviewId> i = reviewIdList.iterator(); i.hasNext();) {
-//        ReviewId reviewId = (ReviewId) i.next();
-//        propertyResource = PropertyResource.getInstance(this.project, true);
-//        ReviewResource reviewResource = propertyResource.getReviewResource(defaultName, true);
-//        ReviewId defaultReviewId = reviewResource.getReviewId();
-//        String directory = defaultReviewId.getDirectory();
-//        reviewId.setDirectory(directory);
-//        reviewResource.setReviewId(reviewId);
-//        try {
-//          propertyResource.addReviewResource(reviewResource);
-//        }
-//        catch (ReviewException e) {
-//          log.debug(e.getMessage());
-//        }
-//      }
-//      tableViewer.setInput(propertyResource.getReviewIdList());
-//    }
-    tableViewer.addDoubleClickListener(new IDoubleClickListener() {
-      public void doubleClick(DoubleClickEvent event) {
+    // if (tableViewer.getTable().getItemCount() <= 0) {
+    // // version 1.
+    // List<ReviewId> reviewIdList = Ver1PropertyHelper.getReviewIdList(this.project.getName(),
+    // false);
+    // IFile jupiterConfigFile = project.getFile(PropertyXmlSerializer.PROPERTY_XML_FILE);
+    // FileResource.remove(new IFile[] { jupiterConfigFile });
+    // // create version 2 .jupiter file.
+    // String defaultName = PropertyConstraints.DEFAULT_REVIEW_ID;
+    // PropertyResource propertyResource = null;
+    // for (Iterator<ReviewId> i = reviewIdList.iterator(); i.hasNext();) {
+    // ReviewId reviewId = (ReviewId) i.next();
+    // propertyResource = PropertyResource.getInstance(this.project, true);
+    // ReviewResource reviewResource = propertyResource.getReviewResource(defaultName, true);
+    // ReviewId defaultReviewId = reviewResource.getReviewId();
+    // String directory = defaultReviewId.getDirectory();
+    // reviewId.setDirectory(directory);
+    // reviewResource.setReviewId(reviewId);
+    // try {
+    // propertyResource.addReviewResource(reviewResource);
+    // }
+    // catch (ReviewException e) {
+    // log.debug(e.getMessage());
+    // }
+    // }
+    // tableViewer.setInput(propertyResource.getReviewIdList());
+    // }
+    this.tableViewer.addDoubleClickListener(new IDoubleClickListener() {
+
+      public void doubleClick(final DoubleClickEvent event) {
         editReviewId();
       }
     });
@@ -182,47 +186,50 @@ public class ReviewPropertyPage extends PropertyPage implements IWorkbenchProper
    * 
    * @param parent the parent.
    */
-  private void createButtonsContent(Composite parent) {
+  private void createButtonsContent(final Composite parent) {
     this.newButton = new Button(parent, SWT.PUSH);
-    newButton.setText(ReviewI18n.getString("ReviewPropertyPage.label.button.new"));
-    newButton.addListener(SWT.Selection, new Listener() {
-      public void handleEvent(Event e) {
+    this.newButton.setText(ReviewI18n.getString("ReviewPropertyPage.label.button.new"));
+    this.newButton.addListener(SWT.Selection, new Listener() {
+
+      public void handleEvent(final Event e) {
         addReviewId();
       }
     });
     FormData newButtonData = new FormData();
-    newButtonData.top = new FormAttachment(table, 0, SWT.TOP);
-    newButtonData.left = new FormAttachment(table, 10);
+    newButtonData.top = new FormAttachment(this.table, 0, SWT.TOP);
+    newButtonData.left = new FormAttachment(this.table, 10);
     newButtonData.right = new FormAttachment(100, 0);
-    newButton.setLayoutData(newButtonData);
+    this.newButton.setLayoutData(newButtonData);
 
     this.editButton = new Button(parent, SWT.PUSH);
-    editButton.setText(ReviewI18n.getString("ReviewPropertyPage.label.button.edit"));
-    editButton.setEnabled(false);
-    editButton.addListener(SWT.Selection, new Listener() {
-      public void handleEvent(Event e) {
+    this.editButton.setText(ReviewI18n.getString("ReviewPropertyPage.label.button.edit"));
+    this.editButton.setEnabled(false);
+    this.editButton.addListener(SWT.Selection, new Listener() {
+
+      public void handleEvent(final Event e) {
         editReviewId();
       }
     });
     FormData editButtonData = new FormData();
-    editButtonData.top = new FormAttachment(newButton, 5);
-    editButtonData.left = new FormAttachment(newButton, 0, SWT.LEFT);
+    editButtonData.top = new FormAttachment(this.newButton, 5);
+    editButtonData.left = new FormAttachment(this.newButton, 0, SWT.LEFT);
     editButtonData.right = new FormAttachment(100, 0);
-    editButton.setLayoutData(editButtonData);
+    this.editButton.setLayoutData(editButtonData);
 
     this.removeButton = new Button(parent, SWT.PUSH);
-    removeButton.setText(ReviewI18n.getString("ReviewPropertyPage.label.button.remove"));
-    removeButton.setEnabled(false);
-    removeButton.addListener(SWT.Selection, new Listener() {
-      public void handleEvent(Event e) {
+    this.removeButton.setText(ReviewI18n.getString("ReviewPropertyPage.label.button.remove"));
+    this.removeButton.setEnabled(false);
+    this.removeButton.addListener(SWT.Selection, new Listener() {
+
+      public void handleEvent(final Event e) {
         removeReviewId();
       }
     });
     FormData removeButtonData = new FormData();
-    removeButtonData.top = new FormAttachment(editButton, 5);
-    removeButtonData.left = new FormAttachment(newButton, 0, SWT.LEFT);
+    removeButtonData.top = new FormAttachment(this.editButton, 5);
+    removeButtonData.left = new FormAttachment(this.newButton, 0, SWT.LEFT);
     removeButtonData.right = new FormAttachment(100, 0);
-    removeButton.setLayoutData(removeButtonData);
+    this.removeButton.setLayoutData(removeButtonData);
   }
 
   /**
@@ -230,11 +237,11 @@ public class ReviewPropertyPage extends PropertyPage implements IWorkbenchProper
    * 
    * @param columnList the list of the <code>TableColumn</code> elements.
    */
-  private void hookSelectionListener(List<TableColumn> columnList) {
-    for (Iterator<TableColumn> i = columnList.iterator(); i.hasNext();) {
-      TableColumn column = i.next();
+  private void hookSelectionListener(final List<TableColumn> columnList) {
+    for (TableColumn column : columnList) {
       column.addListener(SWT.Selection, new Listener() {
-        public void handleEvent(Event event) {
+
+        public void handleEvent(final Event event) {
           String columnKey = (String) event.widget.getData(COLUMN_KEY);
           sortBy(columnKey);
         }
@@ -247,19 +254,19 @@ public class ReviewPropertyPage extends PropertyPage implements IWorkbenchProper
    * 
    * @param columnKey the <code>String</code> columnKey.
    */
-  protected void sortBy(String columnKey) {
+  protected void sortBy(final String columnKey) {
     ViewerSorter viewerSorter = ReviewPropertyViewerSorter.getViewerSorter(columnKey);
     if (viewerSorter != null) {
-      ViewerSorter previousSorter = tableViewer.getSorter();
+      ViewerSorter previousSorter = this.tableViewer.getSorter();
       if (previousSorter == viewerSorter) {
         ReviewPropertyViewerSorter.setReverse(!ReviewPropertyViewerSorter.isReverse());
         // Resets sorter.
-        tableViewer.setSorter(null);
+        this.tableViewer.setSorter(null);
       }
       else {
         ReviewPropertyViewerSorter.setReverse(false);
       }
-      tableViewer.setSorter(viewerSorter);
+      this.tableViewer.setSorter(viewerSorter);
     }
   }
 
@@ -269,20 +276,19 @@ public class ReviewPropertyPage extends PropertyPage implements IWorkbenchProper
   private void addReviewId() {
     ReviewDialog.processConfigWizardDialog(this.project);
     List<ReviewId> reviewIdList = PropertyResource.getInstance(this.project, true).getReviewIdList();
-    tableViewer.setInput(reviewIdList);
+    this.tableViewer.setInput(reviewIdList);
   }
 
   /**
    * Edits the selected review ID.
    */
   private void editReviewId() {
-    int selectedIndex = table.getSelectionIndex();
+    int selectedIndex = this.table.getSelectionIndex();
     if (selectedIndex >= 0) {
-      ReviewId reviewId = (ReviewId) tableViewer.getElementAt(selectedIndex);
-      Dialog dialog = new ReviewIdEditDialog(composite.getShell(), this.project, reviewId);
+      ReviewId reviewId = (ReviewId) this.tableViewer.getElementAt(selectedIndex);
+      Dialog dialog = new ReviewIdEditDialog(this.composite.getShell(), this.project, reviewId);
       dialog.open();
-      this.tableViewer.setInput(PropertyResource.getInstance(this.project, true)
-          .getReviewIdList());
+      this.tableViewer.setInput(PropertyResource.getInstance(this.project, true).getReviewIdList());
     }
   }
 
@@ -290,26 +296,25 @@ public class ReviewPropertyPage extends PropertyPage implements IWorkbenchProper
    * Removes the selected review ID
    */
   private void removeReviewId() {
-    int selectedIndex = table.getSelectionIndex();
+    int selectedIndex = this.table.getSelectionIndex();
     if (selectedIndex >= 0) {
-      ReviewId reviewId = (ReviewId) tableViewer.getElementAt(selectedIndex);
+      ReviewId reviewId = (ReviewId) this.tableViewer.getElementAt(selectedIndex);
       IFile[] reviewIFiles = FileResource.getReviewIFiles(this.project, reviewId);
-      Dialog dialog = new ReviewIdRemovalDialog(composite.getShell(), reviewIFiles);
+      Dialog dialog = new ReviewIdRemovalDialog(this.composite.getShell(), reviewIFiles);
       dialog.open();
-      if (dialog.getReturnCode() == Dialog.OK) {
+      if (dialog.getReturnCode() == Window.OK) {
         // remove review files associated with the review id.
         FileResource.remove(reviewIFiles);
         try {
-          PropertyResource propertyResource = PropertyResource
-              .getInstance(this.project, false);
+          PropertyResource propertyResource = PropertyResource.getInstance(this.project, false);
           propertyResource.removeReviewResource(reviewId);
         }
         catch (ReviewException e) {
-          log.error(e);
+          this.log.error(e);
         }
       }
     }
-    tableViewer.setInput(PropertyResource.getInstance(this.project, true).getReviewIdList());
+    this.tableViewer.setInput(PropertyResource.getInstance(this.project, true).getReviewIdList());
   }
 
   /**
