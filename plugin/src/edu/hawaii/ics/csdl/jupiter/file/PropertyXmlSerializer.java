@@ -57,8 +57,30 @@ public class PropertyXmlSerializer {
   public static Property newProperty(final IProject project) throws ReviewException {
     IFile jupiterConfigIFile = project.getFile(PROPERTY_XML_FILE);
     File jupiterConfigFile = jupiterConfigIFile.getLocation().toFile();
+    Property property = null;
 
-    return readProperty(jupiterConfigFile);
+    if (jupiterConfigFile.exists()) {
+      property = readProperty(jupiterConfigFile);
+    }
+    else {
+      // parse the defaults
+      if (FileResource.getActiveProject().getName().equals(project.getName())) {
+        File configFile;
+        try {
+          configFile = copyDefaultConfigFileTo(jupiterConfigFile);
+          property = readProperty(configFile);
+          jupiterConfigIFile.refreshLocal(IResource.DEPTH_ONE, null);
+        }
+        catch (IOException e) {
+          throw new ReviewException("IOException: " + e.getMessage(), e);
+        }
+        catch (CoreException e) {
+          throw new ReviewException("CoreException: " + e.getMessage(), e);
+        }
+      }
+    }
+
+    return property;
   }
 
   // Parse the xml file to property object using jaxb
@@ -118,6 +140,34 @@ public class PropertyXmlSerializer {
     }
 
   }
+
+  /**
+   * Copies default config file in the <code>Project</code>. Leave the current config file in the project if the file
+   * already exists.
+   * 
+   * @param outputPropertyFile the output property file.
+   * @return the config file <code>File</code> instance.
+   * @throws IOException if problems occur.
+   * @throws CoreException if problems occur.
+   */
+  private static File copyDefaultConfigFileTo(final File outputPropertyFile) throws IOException, CoreException {
+    // System.out.println("about to copy a file to " + outputPropertyFile);
+    if (!outputPropertyFile.exists()) {
+      outputPropertyFile.createNewFile();
+    }
+
+    URL pluginUrl = ReviewPlugin.getInstance().getInstallURL();
+    // System.out.println(pluginUrl.getFile());
+    URL xmlUrl = FileLocator.toFileURL(new URL(pluginUrl, DEFAULT_PROPERTY_XML_FILE));
+    // System.out.println("From : " + xmlUrl);
+
+    File sourceXmlFile = new File(xmlUrl.getFile());
+    // copy XML file in the plug-in directory to the state location.
+    // System.out.println("From : " + sourceXmlFile);
+    FileUtil.copy(sourceXmlFile, outputPropertyFile);
+    return outputPropertyFile;
+  }
+
 
   /**
    * Loads the default review from property.xml.
