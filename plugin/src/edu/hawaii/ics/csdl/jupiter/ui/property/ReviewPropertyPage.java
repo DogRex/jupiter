@@ -1,14 +1,17 @@
 package edu.hawaii.ics.csdl.jupiter.ui.property;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ColumnWeightData;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.TableLayout;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.ViewerSorter;
@@ -24,8 +27,8 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
-import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.ui.IWorkbenchPropertyPage;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.PropertyPage;
 
 import edu.hawaii.ics.csdl.jupiter.ReviewException;
@@ -107,7 +110,7 @@ public class ReviewPropertyPage extends PropertyPage implements IWorkbenchProper
    * @param parent the composite.
    */
   private void createReviewIdTableContent(final Composite parent) {
-    this.table = new Table(parent, SWT.BORDER | SWT.FULL_SELECTION);
+    this.table = new Table(parent, SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI);
     FormData tableData = new FormData();
     tableData.left = new FormAttachment(0, 0);
     tableData.right = new FormAttachment(80, 0);
@@ -150,6 +153,8 @@ public class ReviewPropertyPage extends PropertyPage implements IWorkbenchProper
     this.tableViewer.setContentProvider(new ReviewPropertyContentProvider());
     this.tableViewer.setSorter(ReviewPropertyViewerSorter.getViewerSorter(COLUMN_DATE_KEY));
     this.tableViewer.setInput(PropertyResource.getInstance(this.project, true).getReviewIdList());
+    // this.tableViewer.
+    // this.table.
 
     // routine for the version 1 compatibility.
     // if (tableViewer.getTable().getItemCount() <= 0) {
@@ -326,22 +331,29 @@ public class ReviewPropertyPage extends PropertyPage implements IWorkbenchProper
    * Edits the selected review ID.
    */
   private void editReviewId() {
-    int selectedIndex = this.table.getSelectionIndex();
-    if (selectedIndex >= 0) {
-      ReviewId reviewId = (ReviewId) this.tableViewer.getElementAt(selectedIndex);
-      Dialog dialog = new ReviewIdEditDialog(this.composite.getShell(), this.project, reviewId);
-      dialog.open();
-      this.tableViewer.setInput(PropertyResource.getInstance(this.project, true).getReviewIdList());
+    IStructuredSelection selection = (IStructuredSelection) this.tableViewer.getSelection();
+    if (selection.size() != 1) {
+      MessageDialog.openError(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(),
+          ReviewI18n.getString("ReviewIdEditDialog.selectionerror.title"),
+          ReviewI18n.getString("ReviewIdEditDialog.selectionerror.message"));
+      return;
     }
+    ReviewId reviewId = (ReviewId) selection.getFirstElement();
+    Dialog dialog = new ReviewIdEditDialog(this.composite.getShell(), this.project, reviewId);
+    dialog.open();
+    this.tableViewer.setInput(PropertyResource.getInstance(this.project, true).getReviewIdList());
+
   }
 
   /**
    * Removes the selected review ID
    */
   private void removeReviewId() {
-    int selectedIndex = this.table.getSelectionIndex();
-    if (selectedIndex >= 0) {
-      ReviewId reviewId = (ReviewId) this.tableViewer.getElementAt(selectedIndex);
+    IStructuredSelection selection = (IStructuredSelection) this.tableViewer.getSelection();
+    Iterator<ReviewId> iterator = selection.iterator();
+
+    while (iterator.hasNext()) {
+      ReviewId reviewId = iterator.next();
       IFile[] reviewIFiles = FileResource.getReviewIFiles(this.project, reviewId);
       Dialog dialog = new ReviewIdRemovalDialog(this.composite.getShell(), reviewIFiles);
       dialog.open();
@@ -362,6 +374,7 @@ public class ReviewPropertyPage extends PropertyPage implements IWorkbenchProper
 
   private void exportReviewId() {
 
+
   }
 
   private void importReviewId() {
@@ -372,16 +385,25 @@ public class ReviewPropertyPage extends PropertyPage implements IWorkbenchProper
    * Handles review id selection
    */
   protected void handleReviewIdSelection() {
-    int index = this.table.getSelectionIndex();
-    boolean isSelected = (index >= 0);
+    IStructuredSelection selection = (IStructuredSelection) this.tableViewer.getSelection();
+    boolean isSelected = false;
+    if (selection.size() >= 1) {
+      isSelected = true;
+    }
     this.newButton.setEnabled(isSelected);
     this.editButton.setEnabled(isSelected);
     this.removeButton.setEnabled(isSelected);
     this.exportButton.setEnabled(isSelected);
-    TableItem item = this.table.getItem(index);
-    ReviewId reviewId = (ReviewId) item.getData();
-    if (reviewId.getReviewId().equals(PropertyConstraints.DEFAULT_REVIEW_ID)) {
-      this.removeButton.setEnabled(false);
+
+    Iterator<ReviewId> it = selection.iterator();
+    // If Default review Id is selected, then disable remove button
+    while (it.hasNext()) {
+      ReviewId reviewId = it.next();
+      if (reviewId.getReviewId().equals(PropertyConstraints.DEFAULT_REVIEW_ID)) {
+        this.removeButton.setEnabled(false);
+        break;
+      }
     }
+
   }
 }
