@@ -1,5 +1,6 @@
 package edu.hawaii.ics.csdl.jupiter.file;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
@@ -17,6 +18,7 @@ import edu.hawaii.ics.csdl.jupiter.file.property.FieldItems;
 import edu.hawaii.ics.csdl.jupiter.file.property.Files;
 import edu.hawaii.ics.csdl.jupiter.file.property.Filter;
 import edu.hawaii.ics.csdl.jupiter.file.property.Filters;
+import edu.hawaii.ics.csdl.jupiter.file.property.ObjectFactory;
 import edu.hawaii.ics.csdl.jupiter.file.property.Phase;
 import edu.hawaii.ics.csdl.jupiter.file.property.Property;
 import edu.hawaii.ics.csdl.jupiter.file.property.Review;
@@ -32,15 +34,16 @@ import edu.hawaii.ics.csdl.jupiter.util.JupiterLogger;
  * @version $Id: PropertyResource.java 180 2011-01-18 03:56:36Z jsakuda $
  */
 public class PropertyResource {
+
   /** Jupiter logger */
-  private JupiterLogger log = JupiterLogger.getLogger();
+  private final JupiterLogger log = JupiterLogger.getLogger();
 
   private static PropertyResource theInstance = new PropertyResource();
-  private Map<String, ReviewId> reviewIdMap;
+  private final Map<String, ReviewId> reviewIdMap;
   private IProject project;
   private boolean isDefaultLoaded;
   private Property property;
-  private Map<String, Review> reviewIdReviewMap;
+  private final Map<String, Review> reviewIdReviewMap;
 
   /** The default review id. */
   public static final String DEFAULT_ID = PropertyConstraints.DEFAULT_REVIEW_ID;
@@ -60,14 +63,14 @@ public class PropertyResource {
    * @param isDefaultLoaded sets <code>true</code> if the default review id is loaded too.
    * @return the review id wrapper class which contains set of <code>ReviewID</code> instances.
    */
-  public static PropertyResource getInstance(IProject project, boolean isDefaultLoaded) {
-    if (project != theInstance.project || isDefaultLoaded != theInstance.isDefaultLoaded) {
+  public static PropertyResource getInstance(final IProject project, final boolean isDefaultLoaded) {
+    if ((project != theInstance.project) || (isDefaultLoaded != theInstance.isDefaultLoaded)) {
       // reload
       theInstance.setValues(project, isDefaultLoaded);
       theInstance.fillReviewIdReviewMap(project, isDefaultLoaded);
       theInstance.fillReviewIdMap();
     }
-    
+
     return theInstance;
   }
 
@@ -77,7 +80,7 @@ public class PropertyResource {
    * @param project the project.
    * @param isDefaultLoaded set true if default review id is also loaded.
    */
-  private void setValues(IProject project, boolean isDefaultLoaded) {
+  private void setValues(final IProject project, final boolean isDefaultLoaded) {
     this.project = project;
     this.isDefaultLoaded = isDefaultLoaded;
   }
@@ -88,12 +91,12 @@ public class PropertyResource {
    * @param project The project containing the reviews.
    * @param isDefaultLoaded True if the default review ID should be loaded, otherwise false.
    */
-  private void fillReviewIdReviewMap(IProject project, boolean isDefaultLoaded) {
+  private void fillReviewIdReviewMap(final IProject project, final boolean isDefaultLoaded) {
     try {
       this.property = PropertyXmlSerializer.newProperty(project);
     }
     catch (ReviewException e) {
-      log.error(e);
+      this.log.error(e);
     }
     if (this.property == null) {
       return;
@@ -112,16 +115,16 @@ public class PropertyResource {
   }
 
   /**
-   * Gets the <code>ReviewResource</code> instance associating with the review id. Returns null
-   * if the review id does not exist.
+   * Gets the <code>ReviewResource</code> instance associating with the review id. Returns null if the review id does
+   * not exist.
    * 
    * @param reviewId the review id.
-   * @param isClone true if the <code>ReviewResource</code> contains the clone of the review
-   *          element. false if it contains the review element of the document.
-   * @return the <code>ReviewResource</code> instance associating with the review id. Returns
-   *         null if the review id does not exist.
+   * @param isClone true if the <code>ReviewResource</code> contains the clone of the review element. false if it
+   *          contains the review element of the document.
+   * @return the <code>ReviewResource</code> instance associating with the review id. Returns null if the review id does
+   *         not exist.
    */
-  public ReviewResource getReviewResource(String reviewId, boolean isClone) {
+  public ReviewResource getReviewResource(final String reviewId, final boolean isClone) {
     Review review = this.reviewIdReviewMap.get(reviewId);
     if (review != null) {
       review = (isClone) ? copyReview(review) : review;
@@ -136,7 +139,7 @@ public class PropertyResource {
    * @param review The review object to copy.
    * @return Returns the copied review.
    */
-  private Review copyReview(Review review) {
+  private Review copyReview(final Review review) {
     if (review == null) {
       return null;
     }
@@ -242,20 +245,21 @@ public class PropertyResource {
   }
 
   /**
-   * Gets the array of the <code>String</code> review id names. Note that the order of the
-   * elements is reverse chronological order in which review id was created.
+   * Gets the array of the <code>String</code> review id names. Note that the order of the elements is reverse
+   * chronological order in which review id was created.
    * 
    * @return the array of the <code>String</code> review id names
    */
   public String[] getReviewIdNames() {
     List<ReviewId> reviewIdList = getReviewIdList();
     Map<Date, String> reviewIdNameMap = new TreeMap<Date, String>(new Comparator<Date>() {
-      public int compare(Date object1, Date object2) {
+
+      public int compare(final Date object1, final Date object2) {
         return object2.compareTo(object1);
       }
     });
-    for (Iterator<ReviewId> i = reviewIdList.iterator(); i.hasNext();) {
-      ReviewId reviewId = (ReviewId) i.next();
+    for (ReviewId reviewId2 : reviewIdList) {
+      ReviewId reviewId = reviewId2;
       reviewIdNameMap.put(reviewId.getDate(), reviewId.getReviewId());
     }
     return new ArrayList<String>(reviewIdNameMap.values()).toArray(new String[] {});
@@ -267,19 +271,18 @@ public class PropertyResource {
    * @param reviewIdName the review id.
    * @return the array of the <code>String</code> review id names
    */
-  public String[] getReviewerIdNames(String reviewIdName) {
+  public String[] getReviewerIdNames(final String reviewIdName) {
     Map<String, ReviewerId> reviewers = getReviewers(reviewIdName);
     return new ArrayList<String>(reviewers.keySet()).toArray(new String[] {});
   }
 
   /**
-   * Gets the map of the <code>ReviewerId</code> instances. Returns the map of default
-   * reviewers if no reviewer exists.
+   * Gets the map of the <code>ReviewerId</code> instances. Returns the map of default reviewers if no reviewer exists.
    * 
    * @param reviewIdName the review id name.
    * @return the <code>Map</code> of the <code>ReviewerId</code> instance.
    */
-  public Map<String, ReviewerId> getReviewers(String reviewIdName) {
+  public Map<String, ReviewerId> getReviewers(final String reviewIdName) {
     ReviewId reviewId = this.reviewIdMap.get(reviewIdName);
     Map<String, ReviewerId> reviewersMap = new TreeMap<String, ReviewerId>();
     if (reviewId != null) {
@@ -298,14 +301,14 @@ public class PropertyResource {
   }
 
   /**
-   * Gets the <code>ReviewId</code> instance from the reviewIdName. Returns null if the
-   * <code>reviewIdName</code> does not exist.
+   * Gets the <code>ReviewId</code> instance from the reviewIdName. Returns null if the <code>reviewIdName</code> does
+   * not exist.
    * 
    * @param reviewIdName the review id name.
-   * @return the <code>ReviewId</code> instance from the reviewIdName. Returns null if the
-   *         review id name does not exist.
+   * @return the <code>ReviewId</code> instance from the reviewIdName. Returns null if the review id name does not
+   *         exist.
    */
-  public ReviewId getReviewId(String reviewIdName) {
+  public ReviewId getReviewId(final String reviewIdName) {
     return this.reviewIdMap.get(reviewIdName);
   }
 
@@ -314,10 +317,10 @@ public class PropertyResource {
    * 
    * @param reviewResource the <code>ReviewResource</code> instance.
    * @throws ReviewException if the review id could not be written.
-   * @return <code>true</code> if review id does not exist and could be written.
-   *         <code>false</code> if review id already exist.
+   * @return <code>true</code> if review id does not exist and could be written. <code>false</code> if review id already
+   *         exist.
    */
-  public boolean addReviewResource(ReviewResource reviewResource) throws ReviewException {
+  public boolean addReviewResource(final ReviewResource reviewResource) throws ReviewException {
     if (reviewResource != null) {
       Review review = reviewResource.getReview();
       ReviewId reviewId = reviewResource.getReviewId();
@@ -337,10 +340,9 @@ public class PropertyResource {
    * 
    * @param reviewId the <code>ReviewId</code> instance.
    * @throws ReviewException if the review id could not be written.
-   * @return <code>true</code> if review id exists and could be written. <code>false</code> if
-   *         review id does not exist.
+   * @return <code>true</code> if review id exists and could be written. <code>false</code> if review id does not exist.
    */
-  public boolean removeReviewResource(ReviewId reviewId) throws ReviewException {
+  public boolean removeReviewResource(final ReviewId reviewId) throws ReviewException {
     ReviewResource reviewResource = getReviewResource(reviewId.getReviewId(), false);
     if (reviewResource != null) {
       Review review = reviewResource.getReview();
@@ -352,5 +354,38 @@ public class PropertyResource {
     }
 
     return false;
+  }
+
+  /**
+   * Exports the selected Review Ids to external file While exporting, it strips off the instance specific data like
+   * date, reviewers etc.
+   * 
+   * @param it Iterator for ReviewId to be exported
+   * @param file File where to export the selected reviews
+   * @return true if the export was suscessful
+   * @throws ReviewException Error while exporting reviews
+   */
+  public boolean exportReviews(final Iterator<ReviewId> it, final File file) throws ReviewException {
+    Property p = (new ObjectFactory()).createProperty();
+    List<Review> reviews = p.getReview();
+    while (it.hasNext()) {
+      ReviewId reviewId = it.next();
+      String reviewIdString = reviewId.getReviewId();
+      // Get a copy of ReviewResource
+      ReviewResource reviewResource = getReviewResource(reviewIdString, true);
+      Review review = reviewResource.getReview();
+
+      // Reset the fields, not relevant for exporting
+      review.setAuthor(null);
+      review.setCreationDate(null);
+      review.setFiles(null);
+      review.setReviewers(null);
+      reviews.add(review);
+    }
+
+    PropertyXmlSerializer.saveProperty(p, file);
+
+    return true;
+
   }
 }

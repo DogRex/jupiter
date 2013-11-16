@@ -127,7 +127,14 @@ public class PropertyXmlSerializer {
   }
 
   // Serialize property to xml using jaxb
-  private static void saveProperty(final Property property, final File outputPropertyFile) throws ReviewException {
+  /**
+   * Serializes Property to given file
+   * 
+   * @param property The properties to save.
+   * @param outputPropertyFile output xml while where to save the given property.
+   * @throws ReviewException Thrown if there is an error during serialization.
+   */
+  public static void saveProperty(final Property property, final File outputPropertyFile) throws ReviewException {
     // create an element for marshalling
     // Property zooInfoElement = (new edu.hawaii.ics.csdl.jupiter.file.property.ObjectFactory()).createProperty();
 

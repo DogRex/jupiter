@@ -1,5 +1,6 @@
 package edu.hawaii.ics.csdl.jupiter.ui.property;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -372,9 +373,27 @@ public class ReviewPropertyPage extends PropertyPage implements IWorkbenchProper
     this.tableViewer.setInput(PropertyResource.getInstance(this.project, true).getReviewIdList());
   }
 
+  /**
+   * Exports the selected Review Ids to external file While exporting, it strips off the instance specific data like
+   * date, reviewers etc.
+   */
   private void exportReviewId() {
-
-
+    IStructuredSelection selection = (IStructuredSelection) this.tableViewer.getSelection();
+    Iterator<ReviewId> iterator = selection.iterator();
+    String fileName = "D:\\temp\\jupiter.xml";
+    File f = new File(fileName);
+    try {
+      boolean status = PropertyResource.getInstance(this.project, true).exportReviews(iterator, f);
+      MessageDialog.openInformation(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(),
+          ReviewI18n.getString("ReviewIdEditDialog.export.suscess.title"),
+          ReviewI18n.getString("ReviewIdEditDialog.export.suscess.message"));
+    }
+    catch (ReviewException e) {
+      MessageDialog.openInformation(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(),
+          ReviewI18n.getString("ReviewIdEditDialog.export.failure.title"),
+          ReviewI18n.getString("ReviewIdEditDialog.export.failure.message"));
+      this.log.error(e);
+    }
   }
 
   private void importReviewId() {
