@@ -45,6 +45,8 @@ import edu.hawaii.ics.csdl.jupiter.util.ReviewDialog;
  */
 public class ReviewPropertyPage extends PropertyPage implements IWorkbenchPropertyPage {
 
+  public ReviewPropertyPage() {}
+
   /** Jupiter logger */
   private final JupiterLogger log = JupiterLogger.getLogger();
 
@@ -56,6 +58,8 @@ public class ReviewPropertyPage extends PropertyPage implements IWorkbenchProper
   private Table table;
   private Button removeButton;
   private Button editButton;
+  private Button exportButton;
+  private Button importButton;
   private Composite composite;
   /** The column review ID key. */
   public static final String COLUMN_REVIEW_ID_KEY = "ReviewPropertyPage.label.column.reviewId";
@@ -93,6 +97,7 @@ public class ReviewPropertyPage extends PropertyPage implements IWorkbenchProper
     layout.marginWidth = 7;
     layout.marginHeight = 7;
     child.setLayout(layout);
+
     return child;
   }
 
@@ -230,6 +235,44 @@ public class ReviewPropertyPage extends PropertyPage implements IWorkbenchProper
     removeButtonData.left = new FormAttachment(this.newButton, 0, SWT.LEFT);
     removeButtonData.right = new FormAttachment(100, 0);
     this.removeButton.setLayoutData(removeButtonData);
+
+    this.exportButton = new Button(parent, SWT.NONE);
+    this.exportButton.addListener(SWT.Selection, new Listener() {
+
+      @Override
+      public void handleEvent(final Event event) {
+        exportReviewId();
+
+      }
+    });
+    this.exportButton.setText(ReviewI18n.getString("ReviewPropertyPage.label.button.export"));
+    this.exportButton.setEnabled(false);
+
+    FormData exportButtonData = new FormData();
+    exportButtonData.top = new FormAttachment(this.removeButton, 5);
+    exportButtonData.left = new FormAttachment(this.newButton, 0, SWT.LEFT);
+    exportButtonData.right = new FormAttachment(100, 0);
+
+    this.exportButton.setLayoutData(exportButtonData);
+
+    this.importButton = new Button(parent, SWT.NONE);
+    this.importButton.addListener(SWT.Selection, new Listener() {
+
+      @Override
+      public void handleEvent(final Event event) {
+        importReviewId();
+
+      }
+    });
+    this.importButton.setText(ReviewI18n.getString("ReviewPropertyPage.label.button.import"));
+    this.importButton.setEnabled(true);
+
+    FormData importButtonData = new FormData();
+    importButtonData.top = new FormAttachment(this.exportButton, 5);
+    importButtonData.left = new FormAttachment(this.newButton, 0, SWT.LEFT);
+    importButtonData.right = new FormAttachment(100, 0);
+
+    this.importButton.setLayoutData(importButtonData);
   }
 
   /**
@@ -317,6 +360,14 @@ public class ReviewPropertyPage extends PropertyPage implements IWorkbenchProper
     this.tableViewer.setInput(PropertyResource.getInstance(this.project, true).getReviewIdList());
   }
 
+  private void exportReviewId() {
+
+  }
+
+  private void importReviewId() {
+
+  }
+
   /**
    * Handles review id selection
    */
@@ -326,6 +377,7 @@ public class ReviewPropertyPage extends PropertyPage implements IWorkbenchProper
     this.newButton.setEnabled(isSelected);
     this.editButton.setEnabled(isSelected);
     this.removeButton.setEnabled(isSelected);
+    this.exportButton.setEnabled(isSelected);
     TableItem item = this.table.getItem(index);
     ReviewId reviewId = (ReviewId) item.getData();
     if (reviewId.getReviewId().equals(PropertyConstraints.DEFAULT_REVIEW_ID)) {
