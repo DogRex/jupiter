@@ -83,8 +83,14 @@ public class PropertyXmlSerializer {
     return property;
   }
 
-  // Parse the xml file to property object using jaxb
-  private static Property readProperty(final File jupiterConfigFile) throws ReviewException {
+  /**
+   * Parse the xml file to property object using jaxb..returns Property object
+   * 
+   * @param jupiterConfigFile xml file containing reviews.
+   * @return Property object
+   * @throws ReviewException error while parsing input file
+   */
+  public static Property readProperty(final File jupiterConfigFile) throws ReviewException {
     JAXBContext jaxbContext;
     try {
       jaxbContext = JAXBContext.newInstance(PROPERTY_PACKAGE_NAMESPACE);

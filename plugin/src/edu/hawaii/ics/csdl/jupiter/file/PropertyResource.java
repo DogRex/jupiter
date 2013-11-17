@@ -377,9 +377,11 @@ public class PropertyResource {
 
       // Reset the fields, not relevant for exporting
       review.setAuthor(null);
-      review.setCreationDate(null);
-      review.setFiles(null);
-      review.setReviewers(null);
+      CreationDate date = review.getCreationDate();
+      date.setFormat("");
+      date.setValue("");
+      review.getFiles().getEntry().clear();
+      review.getReviewers().getEntry().clear();
       reviews.add(review);
     }
 
@@ -388,4 +390,18 @@ public class PropertyResource {
     return true;
 
   }
+
+  /**
+   * Parses the given review template file and returns the reviews
+   * 
+   * @param file review template file
+   * @return list of Reviews present in the given file
+   * @throws ReviewException exception thrown if there are any errors while parsing.
+   */
+  public List<Review> getReviews(final File file) throws ReviewException {
+    Property p = PropertyXmlSerializer.readProperty(file);
+    List<Review> reviews = p.getReview();
+    return reviews;
+  }
+
 }

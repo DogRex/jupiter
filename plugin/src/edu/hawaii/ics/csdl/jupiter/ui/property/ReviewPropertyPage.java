@@ -37,6 +37,8 @@ import edu.hawaii.ics.csdl.jupiter.ReviewI18n;
 import edu.hawaii.ics.csdl.jupiter.file.FileResource;
 import edu.hawaii.ics.csdl.jupiter.file.PropertyConstraints;
 import edu.hawaii.ics.csdl.jupiter.file.PropertyResource;
+import edu.hawaii.ics.csdl.jupiter.file.ReviewResource;
+import edu.hawaii.ics.csdl.jupiter.file.property.Review;
 import edu.hawaii.ics.csdl.jupiter.model.review.ReviewId;
 import edu.hawaii.ics.csdl.jupiter.util.JupiterLogger;
 import edu.hawaii.ics.csdl.jupiter.util.ReviewDialog;
@@ -396,8 +398,46 @@ public class ReviewPropertyPage extends PropertyPage implements IWorkbenchProper
     }
   }
 
+  /**
+   * Import the reviews from the given review template.. Throw error if the review already exists
+   */
   private void importReviewId() {
+    String fileName = "D:\\temp\\jupiter.xml";
+    File f = new File(fileName);
+    PropertyResource propertyResource = PropertyResource.getInstance(this.project, true);
+    try {
+      // List of existing review names
+      List<String> reviewNames = new ArrayList<String>();
+      for (ReviewId reviewId : propertyResource.getReviewIdList()) {
+        reviewNames.add(reviewId.getReviewId());
+      }
 
+      // Get reviews from the given file
+      List<Review> reviews = propertyResource.getReviews(f);
+
+      // Check if any review already exists
+      for (Review review : reviews) {
+        if (reviewNames.contains(review.getId())) {
+          MessageDialog.openError(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(),
+              ReviewI18n.getString("ReviewIdEditDialog.error"),
+              review.getId() + " : " + ReviewI18n.getString("ReviewIdEditDialog.import.duplicate"));
+          // Exit if the review already exists
+          return;
+        }
+      }
+
+      // Add the imported reviews to project
+      for (Review review : reviews) {
+        propertyResource.addReviewResource(new ReviewResource(review));
+      }
+      this.tableViewer.setInput(propertyResource.getReviewIdList());
+    }
+    catch (ReviewException e) {
+      MessageDialog.openInformation(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(),
+          ReviewI18n.getString("ReviewIdEditDialog.error"),
+          ReviewI18n.getString("ReviewIdEditDialog.import.failure.message"));
+      this.log.error(e);
+    }
   }
 
   /**
