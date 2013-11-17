@@ -25,6 +25,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
@@ -247,7 +248,6 @@ public class ReviewPropertyPage extends PropertyPage implements IWorkbenchProper
     this.exportButton = new Button(parent, SWT.NONE);
     this.exportButton.addListener(SWT.Selection, new Listener() {
 
-      @Override
       public void handleEvent(final Event event) {
         exportReviewId();
 
@@ -266,7 +266,6 @@ public class ReviewPropertyPage extends PropertyPage implements IWorkbenchProper
     this.importButton = new Button(parent, SWT.NONE);
     this.importButton.addListener(SWT.Selection, new Listener() {
 
-      @Override
       public void handleEvent(final Event event) {
         importReviewId();
 
@@ -380,10 +379,14 @@ public class ReviewPropertyPage extends PropertyPage implements IWorkbenchProper
    * date, reviewers etc.
    */
   private void exportReviewId() {
+    FileDialog fileDialog = new FileDialog(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(), SWT.SAVE);
+    fileDialog.setText(ReviewI18n.getString("ReviewIdEditDialog.export.file-selection-dialog.text"));
+    fileDialog.setFileName("review_template.xml");
+    String path = fileDialog.open();
+    File f = new File(path);
+
     IStructuredSelection selection = (IStructuredSelection) this.tableViewer.getSelection();
     Iterator<ReviewId> iterator = selection.iterator();
-    String fileName = "D:\\temp\\jupiter.xml";
-    File f = new File(fileName);
     try {
       boolean status = PropertyResource.getInstance(this.project, true).exportReviews(iterator, f);
       MessageDialog.openInformation(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(),
@@ -402,8 +405,10 @@ public class ReviewPropertyPage extends PropertyPage implements IWorkbenchProper
    * Import the reviews from the given review template.. Throw error if the review already exists
    */
   private void importReviewId() {
-    String fileName = "D:\\temp\\jupiter.xml";
-    File f = new File(fileName);
+    FileDialog fileDialog = new FileDialog(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(), SWT.OPEN);
+    fileDialog.setText(ReviewI18n.getString("ReviewIdEditDialog.import.file-selection-dialog.text"));
+    String path = fileDialog.open();
+    File f = new File(path);
     PropertyResource propertyResource = PropertyResource.getInstance(this.project, true);
     try {
       // List of existing review names
