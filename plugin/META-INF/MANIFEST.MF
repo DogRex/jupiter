@@ -28,7 +28,8 @@ Bundle-ClassPath: lib/stax/jsr173_1.0_api.jar,
  lib/stax/stax-1.2.0.jar,
  lib/stax/stax-utils.jar,
  lib/junit/junit-4.7.jar,
- jupiter.jar
+ jupiter.jar,
+ lib/jaxb/jaxb-api-2.2.jar
 Export-Package: edu.hawaii.ics.csdl.jupiter,
  edu.hawaii.ics.csdl.jupiter.ccvs,
  edu.hawaii.ics.csdl.jupiter.event,
