@@ -18,6 +18,8 @@ import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.FormLayout;
@@ -245,10 +247,11 @@ public class ReviewPropertyPage extends PropertyPage implements IWorkbenchProper
     removeButtonData.right = new FormAttachment(100, 0);
     this.removeButton.setLayoutData(removeButtonData);
 
-    this.exportButton = new Button(parent, SWT.NONE);
+    this.exportButton = new Button(parent, SWT.PUSH);
+    
     this.exportButton.addListener(SWT.Selection, new Listener() {
 
-      public void handleEvent(final Event event) {
+      public void handleEvent(final Event e) {
         exportReviewId();
 
       }
@@ -263,14 +266,25 @@ public class ReviewPropertyPage extends PropertyPage implements IWorkbenchProper
 
     this.exportButton.setLayoutData(exportButtonData);
 
-    this.importButton = new Button(parent, SWT.NONE);
-    this.importButton.addListener(SWT.Selection, new Listener() {
-
-      public void handleEvent(final Event event) {
-        importReviewId();
-
-      }
-    });
+    this.importButton = new Button(parent, SWT.PUSH);
+    importButton.addSelectionListener(new SelectionListener() {
+		
+		public void widgetSelected(SelectionEvent e) {
+			importReviewId();
+		}
+		
+		public void widgetDefaultSelected(SelectionEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+	});
+//    this.importButton.addListener(SWT.Selection, new Listener() {
+//
+//      public void handleEvent(final Event e) {
+//        importReviewId();
+//
+//      }
+//    });
     this.importButton.setText(ReviewI18n.getString("ReviewPropertyPage.label.button.import"));
     this.importButton.setEnabled(true);
 
