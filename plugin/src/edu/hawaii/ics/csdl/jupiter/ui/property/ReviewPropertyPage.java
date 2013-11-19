@@ -248,7 +248,7 @@ public class ReviewPropertyPage extends PropertyPage implements IWorkbenchProper
     this.exportButton = new Button(parent, SWT.NONE);
     this.exportButton.addListener(SWT.Selection, new Listener() {
 
-      public void handleEvent(final Event event) {
+      public void handleEvent(final Event e) {
         exportReviewId();
 
       }
@@ -266,7 +266,7 @@ public class ReviewPropertyPage extends PropertyPage implements IWorkbenchProper
     this.importButton = new Button(parent, SWT.NONE);
     this.importButton.addListener(SWT.Selection, new Listener() {
 
-      public void handleEvent(final Event event) {
+      public void handleEvent(final Event e) {
         importReviewId();
 
       }
