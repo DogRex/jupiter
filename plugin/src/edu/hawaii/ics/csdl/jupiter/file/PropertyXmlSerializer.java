@@ -35,18 +35,14 @@ import edu.hawaii.ics.csdl.jupiter.util.JupiterLogger;
  * @version $Id: PropertyXmlSerializer.java 179 2010-07-01 09:54:42Z jsakuda $
  */
 public class PropertyXmlSerializer {
+
   /** Jupiter logger */
   private static JupiterLogger log = JupiterLogger.getLogger();
-
-  private static final String DEFAULT_PROPERTY_XML_FILE = "property.xml";
-  /** The property XML file name. */
-  public static final String PROPERTY_XML_FILE = ".jupiter";
 
   /**
    * Prohibits instantiation.
    */
-  private PropertyXmlSerializer() {
-  }
+  private PropertyXmlSerializer() {}
 
   /**
    * Creates the new <code>Property</code> config instance in the <code>IProject</code>.
@@ -55,47 +51,60 @@ public class PropertyXmlSerializer {
    * @return the new <code>Property</code> instance.
    * @throws ReviewException if an error occurs during the new document creation.
    */
-  public static Property newProperty(IProject project) throws ReviewException {
-    IFile jupiterConfigIFile = project.getFile(PROPERTY_XML_FILE);
+  public static Property newProperty(final IProject project) throws ReviewException {
+    IFile jupiterConfigIFile = project.getFile(PropertyResource.PROPERTY_XML_FILE);
     File jupiterConfigFile = jupiterConfigIFile.getLocation().toFile();
+    Property property = null;
+
+    if (jupiterConfigFile.exists()) {
+      property = parseProperty(jupiterConfigFile);
+    }
+    else {
+      // parse the defaults
+      if (FileResource.getActiveProject().getName().equals(project.getName())) {
+        File configFile;
+        try {
+          configFile = copyDefaultConfigFileTo(jupiterConfigFile);
+          property = parseProperty(configFile);
+          jupiterConfigIFile.refreshLocal(IResource.DEPTH_ONE, null);
+        }
+        catch (IOException e) {
+          throw new ReviewException("IOException : " + e.getMessage(), e);
+        }
+        catch (CoreException e) {
+          throw new ReviewException("CoreException : " + e.getMessage(), e);
+        }
+      }
+    }
+
+    return property;
+  }
+
+  /**
+   * Parses the given XML file and return Property object
+   * 
+   * @param file XML file containing property
+   * @return parsed Property object
+   * @throws ReviewException if an error occurs during parsing
+   */
+  public static Property parseProperty(final File file) throws ReviewException {
     Property property = null;
 
     XMLInputFactory xmlif = XMLInputFactory.newInstance();
     xmlif.setProperty(XMLInputFactory.IS_REPLACING_ENTITY_REFERENCES, Boolean.TRUE);
     xmlif.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
     xmlif.setProperty(XMLInputFactory.IS_COALESCING, Boolean.FALSE);
-
     XMLStreamReader reader = null;
 
     try {
-      if (jupiterConfigFile.exists()) {
-        reader = xmlif.createXMLStreamReader(jupiterConfigFile.getAbsolutePath(),
-            new FileInputStream(jupiterConfigFile));
-
-        property = StaxPropertyXmlUtil.parsePropertyFile(reader);
-      }
-      else {
-        // parse the defaults
-        if (FileResource.getActiveProject().getName().equals(project.getName())) {
-          File configFile = copyDefaultConfigFileTo(jupiterConfigFile);
-          reader = xmlif.createXMLStreamReader(configFile.getAbsolutePath(),
-              new FileInputStream(configFile));
-          property = StaxPropertyXmlUtil.parsePropertyFile(reader);
-          jupiterConfigIFile.refreshLocal(IResource.DEPTH_ONE, null);
-        }
-      }
+      reader = xmlif.createXMLStreamReader(file.getAbsolutePath(), new FileInputStream(file));
+      property = StaxPropertyXmlUtil.parsePropertyFile(reader);
     }
     catch (FileNotFoundException e) {
-      throw new ReviewException("FileNotFoundException: " + e.getMessage(), e);
+      throw new ReviewException("FileNotFoundException : " + e.getMessage(), e);
     }
     catch (XMLStreamException e) {
-      throw new ReviewException("XMLStreamException: " + e.getMessage(), e);
-    }
-    catch (CoreException e) {
-      throw new ReviewException("CoreException: " + e.getMessage(), e);
-    }
-    catch (IOException e) {
-      throw new ReviewException("IOException: " + e.getMessage(), e);
+      throw new ReviewException("XMLStreamException : " + e.getMessage(), e);
     }
     finally {
       if (reader != null) {
@@ -107,7 +116,6 @@ public class PropertyXmlSerializer {
         }
       }
     }
-
     return property;
   }
 
@@ -115,25 +123,11 @@ public class PropertyXmlSerializer {
    * Serializes a <code>Property</code> to the jupiter config.
    * 
    * @param property The properties to save.
-   * @param project The project that the property is for.
+   * @param outputPropertyFile file to serialize the given Property object
    * @throws ReviewException Thrown if there is an error during serialization.
    */
-  public static void serializeProperty(Property property, IProject project)
-      throws ReviewException {
-    IFile outputPropertyIFile = project.getFile(PROPERTY_XML_FILE);
-    try {
-      // try to refresh the resource since some plugins (CVS) 
-      // don't refresh after updating the project files
-      outputPropertyIFile.refreshLocal(IResource.DEPTH_ONE, null);
-    } 
-    catch (CoreException e) {
-      log.error(e);
-    }
-    
-    File outputPropertyFile = outputPropertyIFile.getLocation().toFile();
-
-    StaxUtilsXMLOutputFactory xmlof = new StaxUtilsXMLOutputFactory(XMLOutputFactory
-        .newInstance());
+  public static void serializeProperty(final Property property, final File outputPropertyFile) throws ReviewException {
+    StaxUtilsXMLOutputFactory xmlof = new StaxUtilsXMLOutputFactory(XMLOutputFactory.newInstance());
     xmlof.setProperty(StaxUtilsXMLOutputFactory.INDENTING, true);
     XMLStreamWriter writer = null;
     try {
@@ -163,29 +157,20 @@ public class PropertyXmlSerializer {
         catch (XMLStreamException e) {
           log.error(e);
         }
-        
-        try {
-          // try to refresh the resource since we wrote to it
-          outputPropertyIFile.refreshLocal(IResource.DEPTH_ONE, null);
-        } 
-        catch (CoreException e) {
-          log.error(e);
-        }
       }
     }
   }
 
   /**
-   * Copies default config file in the <code>Project</code>. Leave the current config file in
-   * the project if the file already exists.
+   * Copies default config file in the <code>Project</code>. Leave the current config file in the project if the file
+   * already exists.
    * 
    * @param outputPropertyFile the output property file.
    * @return the config file <code>File</code> instance.
    * @throws IOException if problems occur.
    * @throws CoreException if problems occur.
    */
-  private static File copyDefaultConfigFileTo(File outputPropertyFile) throws IOException,
-      CoreException {
+  private static File copyDefaultConfigFileTo(final File outputPropertyFile) throws IOException, CoreException {
     // System.out.println("about to copy a file to " + outputPropertyFile);
     if (!outputPropertyFile.exists()) {
       outputPropertyFile.createNewFile();
@@ -193,7 +178,7 @@ public class PropertyXmlSerializer {
 
     URL pluginUrl = ReviewPlugin.getInstance().getInstallURL();
     // System.out.println(pluginUrl.getFile());
-    URL xmlUrl = FileLocator.toFileURL(new URL(pluginUrl, DEFAULT_PROPERTY_XML_FILE));
+    URL xmlUrl = FileLocator.toFileURL(new URL(pluginUrl, PropertyResource.DEFAULT_PROPERTY_XML_FILE));
     // System.out.println("From : " + xmlUrl);
 
     File sourceXmlFile = new File(xmlUrl.getFile());
@@ -210,18 +195,17 @@ public class PropertyXmlSerializer {
    */
   public static Review cloneDefaultReview() {
     URL pluginUrl = ReviewPlugin.getInstance().getInstallURL();
-    
+
     XMLInputFactory xmlif = XMLInputFactory.newInstance();
     xmlif.setProperty(XMLInputFactory.IS_REPLACING_ENTITY_REFERENCES, Boolean.TRUE);
     xmlif.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
     xmlif.setProperty(XMLInputFactory.IS_COALESCING, Boolean.FALSE);
-    
+
     XMLStreamReader reader = null;
     try {
-      URL xmlUrl = FileLocator.toFileURL(new URL(pluginUrl, DEFAULT_PROPERTY_XML_FILE));
-      
-      reader = xmlif.createXMLStreamReader(xmlUrl.getFile(), new FileInputStream(xmlUrl
-          .getFile()));
+      URL xmlUrl = FileLocator.toFileURL(new URL(pluginUrl, PropertyResource.DEFAULT_PROPERTY_XML_FILE));
+
+      reader = xmlif.createXMLStreamReader(xmlUrl.getFile(), new FileInputStream(xmlUrl.getFile()));
 
       Property property = StaxPropertyXmlUtil.parsePropertyFile(reader);
       // there should only be the default review in the list
