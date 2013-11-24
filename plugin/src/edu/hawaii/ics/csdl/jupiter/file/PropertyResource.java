@@ -416,7 +416,7 @@ public class PropertyResource {
       review.setAuthor(null);
       CreationDate date = review.getCreationDate();
       date.setFormat("");
-      date.setValue("");
+      date.setValue(" ");
       review.getFiles().getEntry().clear();
       review.getReviewers().getEntry().clear();
       reviews.add(review);
