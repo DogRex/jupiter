@@ -401,10 +401,16 @@ public class ReviewPropertyPage extends PropertyPage implements IWorkbenchProper
     }
   }
 
+
+  private void importReviewId() {
+    ReviewDialog.processImportReviewWizard(this.project);
+
+  }
+
   /**
    * Import the reviews from the given review template.. Throw error if the review already exists
    */
-  private void importReviewId() {
+  private void importReviewIdOld() {
     FileDialog fileDialog = new FileDialog(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(), SWT.OPEN);
     fileDialog.setText(ReviewI18n.getString("ReviewIdEditDialog.import.file-selection-dialog.text"));
     String path = fileDialog.open();
